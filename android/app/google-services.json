@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "838529841091",
+    "firebase_url": "https://falcon-byte-default-rtdb.firebaseio.com",
+    "project_id": "falcon-byte",
+    "storage_bucket": "falcon-byte.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:838529841091:android:4a56c5c96c0aef20b8af76",
+        "android_client_info": {
+          "package_name": "com.falconbyte"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "838529841091-8hictql9e1taj7pq0s04tddb3pnqkr86.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.falconbyte",
+            "certificate_hash": "5cf9b179491a827af821593fbe7b13d00d923c0a"
+          }
+        },
+        {
+          "client_id": "838529841091-j8gpd76ne0nqq9tb9ctub40l7rvqefd3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOyzxrLFH6E2D9S1a__rdZEenbgdvYank"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "838529841091-j8gpd76ne0nqq9tb9ctub40l7rvqefd3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "838529841091-3tmvglqncgouku4pvar8dpf1d8fvtbhm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.falconByte"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,47 @@
+# Plan de Implementación de Chat en Tiempo Real 💬🦅
+
+Este plan detalla la construcción del módulo de chat peer-to-peer integrando Firestore (para las salas o conversaciones) y Firebase Realtime Database (para la velocidad instantánea de los mensajes).
+
+## Estructura de Arquitectura Limpia
+
+Se implementará el feature `chat` sobre la estructura base existente, creando las siguientes capas:
+
+### 1. Capa de Dominio (Domain)
+- **Entidades:**
+  - `Mensaje`: Modelo base de un mensaje de texto.
+  - `Conversacion`: Información meta de la sala de chat entre dos estudiantes/compañeros.
+- **Repositorio (Contrato):**
+  - `ChatRepository`: Define las interfaces para enviar y escuchar mensajes, y crear/iniciar conversaciones.
+- **Casos de Uso (Use Cases):**
+  - `EnviarMensajeUseCase`
+  - `ObtenerMensajesStreamUseCase`
+  - `ObtenerConversacionesUseCase`
+  - `IniciarConversacionUseCase`
+
+### 2. Capa de Datos (Data)
+- **Modelos:**
+  - `MensajeModel` (serialización a RTDB)
+  - `ConversacionModel` (serialización a Firestore)
+- **Orígenes de Datos (Data Sources):**
+  - `ChatRemoteDataSourceImpl`: Manejará las peticiones directas a `FirebaseFirestore` y `FirebaseDatabase`.
+- **Repositorio (Implementación):**
+  - `ChatRepositoryImpl`: Coordina excepciones y orquesta los llamados al DataSource.
+
+### 3. Capa de Presentación (Presentation)
+- **BLoC / State Management:**
+  - `ChatBloc`: Maneja el envío de mensajes.
+  - `ConversacionesBloc`: Maneja la lista de chats activos.
+- **Pantallas (Screens):**
+  - `ConversacionesScreen`: Pantalla con la lista de los últimos chats (estilo WhatsApp).
+  - `ChatScreen`: Sala interactiva en tiempo real entre el usuario y otro miembro de la universidad.
+- **Widgets:**
+  - `BurbujaMensaje`: Componente UI con estética moderna (glassmorphism/colors) para ver mensajes propios vs los de la otra persona.
+
+## Decisiones Técnicas
+- Se usará de forma híbrida **Cloud Firestore** para `conversaciones` (pues permite consultas complejas, filtrar por arrays `participants` e incluye la fecha de última actualización) y **Realtime Database** para los `mensajes` dentro de cada conversación (ya que no cobra por lectura y es idóneo para alta velocidad y latencia ultra-baja).
+- Se reutilizará el Modelo de Usuario actual para poblar la información de los perfiles en los chats.
+
+## Verification Plan
+1. Crear una conversación nueva con otro usuario de la DB.
+2. Ingresar a la sala y mandar mensajes (verificar que se muestran al instante en ambos lados sin recargar).
+3. Salir y confirmar que la lista global de "Mis Chats" se ordenó con el último mensaje hasta arriba.
