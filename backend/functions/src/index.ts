@@ -4,5 +4,4 @@ import * as admin from 'firebase-admin';
 admin.initializeApp();
 
 // Exportar módulos (Aquí se registrarán todas las Cloud Functions)
-// export * from './triggers/onUserCreated';
-// export * from './services/generarVoucher';
+export * from './triggers/cafeteria';
