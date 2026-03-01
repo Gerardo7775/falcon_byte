@@ -37,8 +37,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = __importStar(require("firebase-admin"));
-// Inicializar de forma global la SDK de Admin
+// Inicializar de forma global la SDK de Admin Node
 admin.initializeApp();
-// Exportar módulos (Aquí se registrarán todas las Cloud Functions)
-__exportStar(require("./triggers/cafeteria"), exports);
+// Exportar controladores (endpoints y triggers)
+__exportStar(require("./controllers/cafeteria.controller"), exports);
+__exportStar(require("./controllers/auth.controller"), exports);
 //# sourceMappingURL=index.js.map

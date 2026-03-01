@@ -16,10 +16,12 @@
   "dependencies": {
     "firebase-admin": "^13.7.0",
     "firebase-functions": "^7.0.6",
+    "lodash": "^4.17.23",
     "zod": "^4.3.6"
   },
   "private": true,
   "devDependencies": {
+    "@types/lodash": "^4.17.24",
     "@types/node": "^25.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

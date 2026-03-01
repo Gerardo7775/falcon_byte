@@ -1,7 +1,8 @@
 import * as admin from 'firebase-admin';
 
-// Inicializar de forma global la SDK de Admin
+// Inicializar de forma global la SDK de Admin Node
 admin.initializeApp();
 
-// Exportar módulos (Aquí se registrarán todas las Cloud Functions)
-export * from './triggers/cafeteria';
+// Exportar controladores (endpoints y triggers)
+export * from './controllers/cafeteria.controller';
+export * from './controllers/auth.controller';

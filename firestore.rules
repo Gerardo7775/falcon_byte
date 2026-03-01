@@ -8,9 +8,17 @@ service cloud.firestore {
     }
 
     // === REGLAS DE CAFETERÍA ===
-    // Solo el Backend via Admin SDK puede escribir vouchers para evitar fraudes
+    match /productos_cafeteria/{productoId} {
+      // Cualquiera autenticado puede leer el menú de la cafetería
+      allow read: if request.auth != null;
+      // Solo admins pueden editarlo (Validando el Custom Claim instanciado por el Backend)
+      allow write: if request.auth != null && request.auth.token.admin == true; 
+    }
+
     match /vouchers/{voucherId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Un alumno solo puede ver sus propios pedidos
+      allow read: if request.auth != null && resource.data.alumnoId == request.auth.uid;
+      // Nadie escribe directamente; se usa el Trigger HTTPS callable en Backend
       allow write: if false; 
     }
 
