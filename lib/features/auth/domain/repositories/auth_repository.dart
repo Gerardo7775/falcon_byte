@@ -23,4 +23,11 @@ abstract class AuthRepository {
     String? telefono,
     String? fotoUrl,
   });
+
+  /// Busca usuarios en Firestore por coincidencia de nombre
+  Future<Either<Failure, List<UsuarioEntity>>> buscarUsuariosPorNombre(
+      String query);
+
+  /// Obtiene la información pública de un usuario mediante su ID
+  Future<Either<Failure, UsuarioEntity?>> obtenerUsuarioPorId(String id);
 }

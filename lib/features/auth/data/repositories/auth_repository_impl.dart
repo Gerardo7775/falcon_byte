@@ -77,4 +77,29 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<UsuarioEntity>>> buscarUsuariosPorNombre(
+      String query) async {
+    try {
+      final modelos = await remoteDataSource.buscarUsuariosPorNombre(query);
+      return Right(modelos.map((m) => m.toEntity()).toList());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UsuarioEntity?>> obtenerUsuarioPorId(String id) async {
+    try {
+      final modelo = await remoteDataSource.obtenerUsuarioPorId(id);
+      return Right(modelo?.toEntity());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -16,6 +16,8 @@ abstract class AuthRemoteDataSource {
     String? telefono,
     String? fotoUrl,
   });
+  Future<List<UsuarioModel>> buscarUsuariosPorNombre(String query);
+  Future<UsuarioModel?> obtenerUsuarioPorId(String id);
 }
 
 /// Implementación del data source remoto
@@ -149,6 +151,62 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return UsuarioModel.fromFirestore(doc);
     } catch (e) {
       throw ServerException(e.toString());
+    }
+  }
+
+  // Helper para remover acentos y diacríticos de strings
+  String _quitarAcentos(String texto) {
+    const conAcento =
+        'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+    const sinAcento =
+        'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
+    String resultado = texto;
+    for (int i = 0; i < conAcento.length; i++) {
+      resultado = resultado.replaceAll(conAcento[i], sinAcento[i]);
+    }
+    return resultado;
+  }
+
+  @override
+  Future<List<UsuarioModel>> buscarUsuariosPorNombre(String query) async {
+    try {
+      final String searchQuery = _quitarAcentos(query.trim().toLowerCase());
+      if (searchQuery.isEmpty) return [];
+
+      // Como Firebase no soporta consultas "LIKE %query%" nativas (búsqueda de subcadenas intermedias),
+      // bajamos todos los usuarios (ideal para MVPs o apps institucionales de pocos miles de usuarios)
+      // y filtramos en RAM para permitir búsquedas ignorando mayúsculas/minúsculas y acentos.
+      final querySnapshot =
+          await firestore.collection(AppConstants.usuariosCollection).get();
+
+      final todosLosUsuarios = querySnapshot.docs
+          .map((doc) => UsuarioModel.fromFirestore(doc))
+          .toList();
+
+      // Filtro local: que el nombre normalizado contenga la cadena buscada normalizada
+      final filtrados = todosLosUsuarios.where((u) {
+        final nombreNormalizado = _quitarAcentos(u.nombre.toLowerCase());
+        return nombreNormalizado.contains(searchQuery);
+      }).toList();
+
+      // Devolvemos solo los primeros 20 para no saturar memoria UI si hay muchos
+      return filtrados.take(20).toList();
+    } catch (e) {
+      throw ServerException('Error al buscar usuarios: $e');
+    }
+  }
+
+  @override
+  Future<UsuarioModel?> obtenerUsuarioPorId(String id) async {
+    try {
+      final doc = await firestore
+          .collection(AppConstants.usuariosCollection)
+          .doc(id)
+          .get();
+      if (!doc.exists) return null;
+      return UsuarioModel.fromFirestore(doc);
+    } catch (e) {
+      return null;
     }
   }
 

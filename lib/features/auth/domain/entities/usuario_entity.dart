@@ -24,15 +24,15 @@ class UsuarioEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    nombre,
-    email,
-    telefono,
-    fotoUrl,
-    esVendedor,
-    fechaRegistro,
-    fechaActualizacion,
-  ];
+        id,
+        nombre,
+        email,
+        telefono,
+        fotoUrl,
+        esVendedor,
+        fechaRegistro,
+        fechaActualizacion,
+      ];
 
   /// Copia con modificaciones
   UsuarioEntity copyWith({
