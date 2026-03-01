@@ -5,11 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../auth/domain/usecases/obtener_usuario_por_id_usecase.dart'
+    as flutter_di;
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../domain/usecases/iniciar_conversacion_usecase.dart';
 import '../bloc/conversaciones/conversaciones_bloc.dart';
 import '../bloc/conversaciones/conversaciones_event.dart';
 import '../bloc/conversaciones/conversaciones_state.dart';
+import '../widgets/usuario_search_delegate.dart';
 
 class ConversacionesScreen extends StatefulWidget {
   const ConversacionesScreen({super.key});
@@ -38,6 +41,19 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
         title: const Text('Mensajes Institucionales'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              if (mounted) {
+                showSearch(
+                  context: context,
+                  delegate: UsuarioSearchDelegate(miPropioId: miId),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: BlocBuilder<ConversacionesBloc, ConversacionesState>(
         builder: (context, state) {
@@ -95,13 +111,27 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
                         color: Theme.of(context)
                             .primaryColor), // Ideal sería cargar la foto del perfil
                   ),
-                  title: Text(
-                    'Usuario $otroParticipanteId', // En producción se cruza con Usuarios Db
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  title: FutureBuilder(
+                      future: sl<flutter_di.ObtenerUsuarioPorIdUseCase>()(
+                          otroParticipanteId),
+                      builder: (context, snapshot) {
+                        String displayName = 'Cargando...';
+                        if (snapshot.connectionState == ConnectionState.done &&
+                            snapshot.hasData) {
+                          snapshot.data!.fold(
+                            (l) => displayName = 'Usuario Desconocido',
+                            (usuario) =>
+                                displayName = usuario?.nombre ?? 'Desconocido',
+                          );
+                        }
+                        return Text(
+                          displayName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      }),
                   subtitle: Text(
                     ultimoMensaje?.texto ?? 'Inicia una conversación...',
                     maxLines: 1,
