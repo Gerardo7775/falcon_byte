@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // === REGLAS DE USUARIOS ===
+    match /usuarios/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // === REGLAS DE CAFETERÍA ===
+    // Solo el Backend via Admin SDK puede escribir vouchers para evitar fraudes
+    match /vouchers/{voucherId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; 
+    }
+
+    // === REGLAS DE CONVERSACIONES ===
+    match /conversaciones/{conversacionId} {
+      // Solo pueden leer/escribir si están en el array de participantes
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.participantesIds;
+    }
+  }
+}
