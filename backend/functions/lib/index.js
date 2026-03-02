@@ -42,4 +42,5 @@ admin.initializeApp();
 // Exportar controladores (endpoints y triggers)
 __exportStar(require("./controllers/cafeteria.controller"), exports);
 __exportStar(require("./controllers/auth.controller"), exports);
+__exportStar(require("./controllers/chat.controller"), exports);
 //# sourceMappingURL=index.js.map

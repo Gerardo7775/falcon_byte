@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/services/notificaciones_service.dart';
 import '../models/usuario_model.dart';
 
 /// Data source remoto — solo autenticación con Microsoft
@@ -62,24 +63,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final doc = await docRef.get();
 
       if (doc.exists) {
-        await docRef.update({'fechaActualizacion': Timestamp.now()});
+        // Al existir el usuario, actualizamos su fecha de login y guardamos su push token actual
+        final tokenFCM = await NotificacionesService.getDeviceToken();
+        final updates = <String, dynamic>{
+          'fechaActualizacion': Timestamp.now()
+        };
+        if (tokenFCM != null) {
+          updates['fcmTokens'] = FieldValue.arrayUnion([tokenFCM]);
+        }
+        await docRef.update(updates);
         return UsuarioModel.fromFirestore(doc);
       }
 
       // Usuario nuevo — crear documento en Firestore
-      final usuario = UsuarioModel(
-        id: user.uid,
-        nombre:
+      final tokenFCM = await NotificacionesService.getDeviceToken();
+      final usuarioData = {
+        'id': user.uid,
+        'nombre':
             user.displayName ?? user.email?.split('@').first ?? 'Estudiante',
-        email: user.email!,
-        telefono: user.phoneNumber,
-        fotoUrl: user.photoURL,
-        esVendedor: false,
+        'email': user.email!,
+        'telefono': user.phoneNumber,
+        'fotoUrl': user.photoURL,
+        'esVendedor': false,
+        'fcmTokens': tokenFCM != null ? [tokenFCM] : [],
+        'fechaRegistro': FieldValue.serverTimestamp(),
+      };
+
+      await docRef.set(usuarioData);
+
+      return UsuarioModel(
+        id: usuarioData['id'] as String,
+        nombre: usuarioData['nombre'] as String,
+        email: usuarioData['email'] as String,
+        telefono: usuarioData['telefono'] as String?,
+        fotoUrl: usuarioData['fotoUrl'] as String?,
+        esVendedor: usuarioData['esVendedor'] as bool,
         fechaRegistro: DateTime.now(),
       );
-
-      await docRef.set(usuario.toJson());
-      return usuario;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getMicrosoftErrorMessage(e.code));
     } catch (e) {
@@ -183,10 +203,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .map((doc) => UsuarioModel.fromFirestore(doc))
           .toList();
 
-      // Filtro local: que el nombre normalizado contenga la cadena buscada normalizada
+      // Filtro local: que el nombre normalizado contenga todos los fragmentos separados por espacio
+      final fragmentosBuscados = searchQuery.split(' ');
       final filtrados = todosLosUsuarios.where((u) {
         final nombreNormalizado = _quitarAcentos(u.nombre.toLowerCase());
-        return nombreNormalizado.contains(searchQuery);
+        return fragmentosBuscados
+            .every((fragmento) => nombreNormalizado.contains(fragmento));
       }).toList();
 
       // Devolvemos solo los primeros 20 para no saturar memoria UI si hay muchos

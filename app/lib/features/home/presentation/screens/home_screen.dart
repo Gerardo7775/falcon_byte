@@ -13,6 +13,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  int _activeBannerIndex = 0;
+  final PageController _pageController = PageController(viewportFraction: 0.92);
 
   @override
   Widget build(BuildContext context) {
@@ -79,24 +81,27 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // Banner Promocional Deslizable
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  height: 140,
-                  child: PageView(
-                    children: [
-                      _buildPromoBanner('Menú del Día',
-                          'https://picsum.photos/seed/menu/400/200', 0),
-                      _buildPromoBanner('Productos de Kiosco',
-                          'https://picsum.photos/seed/kiosco/400/200', 1),
-                      _buildPromoBanner('Más de Cafetería',
-                          'https://picsum.photos/seed/cafe/400/200', 2),
-                      _buildPromoBanner('Mercado Local',
-                          'https://picsum.photos/seed/mercado/400/200', 3),
-                      _buildPromoBanner('Otros Productos',
-                          'https://picsum.photos/seed/otros/400/200', 4),
-                    ],
-                  ),
+              SizedBox(
+                height: 155,
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (int page) {
+                    setState(() {
+                      _activeBannerIndex = page;
+                    });
+                  },
+                  children: [
+                    _buildPromoBanner('Menú del Día',
+                        'https://picsum.photos/seed/menu/400/200', 0),
+                    _buildPromoBanner('Productos de Kiosco',
+                        'https://picsum.photos/seed/kiosco/400/200', 1),
+                    _buildPromoBanner('Más de Cafetería',
+                        'https://picsum.photos/seed/cafe/400/200', 2),
+                    _buildPromoBanner('Mercado Local',
+                        'https://picsum.photos/seed/mercado/400/200', 3),
+                    _buildPromoBanner('Otros Productos',
+                        'https://picsum.photos/seed/otros/400/200', 4),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -199,8 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPromoBanner(String title, String imageUrl, int activeIndex) {
+  Widget _buildPromoBanner(String title, String imageUrl, int pageIndex) {
     return Container(
+      margin: const EdgeInsets.symmetric(
+          horizontal: 6), // Separación para el peeking
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(16),
@@ -242,11 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildDot(activeIndex == 0),
-                _buildDot(activeIndex == 1),
-                _buildDot(activeIndex == 2),
-                _buildDot(activeIndex == 3),
-                _buildDot(activeIndex == 4),
+                for (int i = 0; i < 5; i++) _buildDot(i == _activeBannerIndex),
               ],
             ),
           )
