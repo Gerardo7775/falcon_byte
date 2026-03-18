@@ -123,12 +123,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final user = firebaseAuth.currentUser;
       if (user == null) return null;
 
-      final doc = await firestore
+      final docRef = firestore
           .collection(AppConstants.usuariosCollection)
-          .doc(user.uid)
-          .get();
+          .doc(user.uid);
 
+      final doc = await docRef.get();
       if (!doc.exists) return null;
+
+      // Refrescar token FCM en cada sesión activa (cubre reinstalaciones/rotaciones de token)
+      final tokenFCM = await NotificacionesService.getDeviceToken();
+      if (tokenFCM != null) {
+        await docRef.update({
+          'fcmTokens': FieldValue.arrayUnion([tokenFCM]),
+        });
+      }
+
       return UsuarioModel.fromFirestore(doc);
     } catch (e) {
       throw ServerException(e.toString());

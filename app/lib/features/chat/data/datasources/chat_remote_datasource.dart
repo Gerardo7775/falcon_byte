@@ -92,11 +92,15 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       await ref.set(nuevoMensaje.toJson());
 
       // 2. Actualizar la metadata de la sala en Firestore (Para la lista de "Mis Chats")
+      // IMPORTANTE: ultimoMensaje debe ser string (no Map) porque el backend
+      // lo lee como string para armar el cuerpo de la notificación push.
+      // remitenteUltimoMensaje es crítico: sin él, el backend aborta el push.
       await firestore
           .collection(AppConstants.conversacionesCollection)
           .doc(conversacionId)
           .update({
-        'ultimoMensaje': nuevoMensaje.toJson(),
+        'ultimoMensaje': texto,
+        'remitenteUltimoMensaje': senderId,
         'fechaActualizacion': Timestamp.fromDate(ahora),
       });
     } catch (e) {

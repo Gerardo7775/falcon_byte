@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/mensaje.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final Mensaje mensaje;
   final bool isMe;
 
@@ -12,63 +13,143 @@ class MessageBubble extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isMe ? theme.primaryColor : theme.cardColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isMe ? 20 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              mensaje.texto,
-              style: TextStyle(
-                color: isMe ? Colors.white : theme.textTheme.bodyLarge?.color,
-                fontSize: 16,
-              ),
+class _MessageBubbleState extends State<MessageBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnim;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _slideAnim = Tween<Offset>(
+      begin: Offset(widget.isMe ? 0.3 : -0.3, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: Align(
+          alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: EdgeInsets.only(
+              left: widget.isMe ? 60 : 12,
+              right: widget.isMe ? 12 : 60,
+              top: 3,
+              bottom: 3,
             ),
-            const SizedBox(height: 4),
-            Row(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+            decoration: BoxDecoration(
+              // Burbujas propias: gradiente diagonal
+              gradient: widget.isMe
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF2251A3),
+                        AppColors.gradientEnd,
+                      ],
+                    )
+                  : null,
+              // Burbujas ajenas: surface glass
+              color: widget.isMe
+                  ? null
+                  : (isDark
+                      ? AppColors.surfaceVariantDark
+                      : Colors.white),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(widget.isMe ? 18 : 4),
+                bottomRight: Radius.circular(widget.isMe ? 4 : 18),
+              ),
+              border: widget.isMe
+                  ? null
+                  : Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.07)
+                          : const Color(0xFFE2E8F4),
+                    ),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.isMe
+                      ? AppColors.primary.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _formatTime(mensaje.timestamp),
+                  widget.mensaje.texto,
                   style: TextStyle(
-                    color: isMe ? Colors.white70 : Colors.grey,
-                    fontSize: 11,
+                    color: widget.isMe
+                        ? Colors.white
+                        : (isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight),
+                    fontSize: 15,
+                    height: 1.4,
                   ),
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    mensaje.leido ? Icons.done_all : Icons.check,
-                    size: 14,
-                    color:
-                        mensaje.leido ? Colors.blue.shade200 : Colors.white70,
-                  ),
-                ]
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTime(widget.mensaje.timestamp),
+                      style: TextStyle(
+                        color: widget.isMe
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : (isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight),
+                        fontSize: 11,
+                      ),
+                    ),
+                    if (widget.isMe) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        widget.mensaje.leido ? Icons.done_all_rounded : Icons.check_rounded,
+                        size: 14,
+                        color: widget.mensaje.leido
+                            ? AppColors.accentVibrant.withValues(alpha: 0.9)
+                            : Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
