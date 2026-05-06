@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // 🛡️ FUNCIONES DE AYUDA (HELPER FUNCTIONS)
+    // ==========================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Verifica si el usuario tiene un rol específico (usando Custom Claims de Auth)
+    // Nota: El Custom Claim 'roles' es inyectado por nuestra Cloud Function (auth.controller.ts)
+    function hasRole(role) {
+      return isSignedIn() && request.auth.token[role] == true; 
+    }
+
+    // ==========================================
+    // 🍔 MÓDULO: CAFETERÍA Y QUIOSCOS
+    // ==========================================
+    
+    // Colección de Productos (Cafetería/Quioscos)
+    match /productos_cafeteria/{productoId} {
+      allow read: if isSignedIn(); // Cualquiera logueado puede ver el menú
+      allow write: if hasRole('admin') || hasRole('vendedor'); // Solo admins/supervisores editan
+    }
+
+    // Colección de Pedidos (Vouchers transaccionales)
+    match /vouchers/{voucherId} {
+      // El alumno ve sus pedidos, los admins ven todos
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || hasRole('admin'));
+      
+      // La escritura (creación/descuento de saldo) solo ocurre vía Backend (Cloud Functions)
+      // Nadie escribe directamente desde el App Flutter.
+      allow write: if false; 
+    }
+
+    // ==========================================
+    // 🏪 MÓDULO: MERCADO LOCAL
+    // ==========================================
+
+    // Publicaciones de alumnos (Mercado Libre Interno)
+    match /mercado_local/{publicacionId} {
+      allow read: if isSignedIn(); // Todos ven lo que se vende
+      
+      // Solo puedes crear si eres tú mismo el vendedor y el precio es coherente (> 0)
+      allow create: if isSignedIn() 
+                    && request.resource.data.vendedorId == request.auth.uid
+                    && request.resource.data.precio >= 0;
+      
+      // Solo el dueño puede editar su publicación (o borrarla)
+      allow update, delete: if isSignedIn() && resource.data.vendedorId == request.auth.uid;
+    }
+
+    // ==========================================
+    // 👥 MÓDULO: PERFILES DE USUARIO
+    // ==========================================
+    match /usuarios/{userId} {
+      allow read: if isSignedIn(); // Para poder buscar vendedores/amigos en el ecosistema
+      allow write: if isOwner(userId); // Solo tú editas tu info (foto, carrera)
+    }
+
+    // ==========================================
+    // 📍 MÓDULO: ZONAS SEGURAS (Puntos de Entrega)
+    // ==========================================
+    match /zonas_seguras/{zonaId} {
+      // Read-Only para toda la comunidad
+      allow read: if isSignedIn();
+      // Modificable de forma estricta solo por personal administrativo
+      allow write: if hasRole('admin');
+    }
+
+    // ==========================================
+    // 💬 MÓDULO: CHATS PEER-TO-PEER
+    // ==========================================
+    match /conversaciones/{conversacionId} {
+      // Solo pueden leer/escribir si están en el array interno de participantes
+      allow read, write: if isSignedIn() && request.auth.uid in resource.data.participantesIds;
+    }
+  }
+}
